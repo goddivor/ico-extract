@@ -1,0 +1,21 @@
+[package]
+name = "ico-extract"
+version = "0.1.0"
+edition = "2021"
+description = "Extract icons (.ico) from Windows PE files (.dll/.exe) — pure Rust, compiles to WASM"
+license = "MIT"
+repository = "https://github.com/goddivor/ico-extract"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+wasm-bindgen = { version = "0.2", optional = true }
+
+[features]
+# Enable the WASM binding (used by wasm-pack). Native builds/tests stay dependency-free.
+wasm = ["dep:wasm-bindgen"]
+
+[profile.release]
+opt-level = "s"
+lto = true

@@ -1,0 +1,31 @@
+{
+  "name": "ico-extract",
+  "version": "0.1.0",
+  "description": "Extract icons (.ico) from Windows PE files (.dll/.exe). Pure-Rust PE parser compiled to WebAssembly — works on any platform, no native build.",
+  "license": "MIT",
+  "author": "Divor",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/goddivor/ico-extract.git"
+  },
+  "keywords": [
+    "ico",
+    "icon",
+    "extract",
+    "pe",
+    "dll",
+    "exe",
+    "imageres",
+    "shell32",
+    "windows",
+    "wasm",
+    "rust"
+  ],
+  "engines": {
+    "node": ">=18.17.0"
+  },
+  "scripts": {
+    "build": "wasm-pack build --target nodejs --release --features wasm --out-dir pkg",
+    "test:rust": "cargo test"
+  }
+}
