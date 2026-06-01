@@ -277,6 +277,12 @@ mod wasm {
         super::extract_icon(pe_bytes, group_index).map_err(|e| JsValue::from_str(&e))
     }
 
+    /// Extract the icon group whose Windows resource id is `id` as `.ico` bytes.
+    #[wasm_bindgen(js_name = extractIconById)]
+    pub fn extract_icon_by_id(pe_bytes: &[u8], id: u32) -> Result<Vec<u8>, JsValue> {
+        super::extract_icon_by_id(pe_bytes, id).map_err(|e| JsValue::from_str(&e))
+    }
+
     /// List the resource ids of every icon group in the file.
     #[wasm_bindgen(js_name = listIconGroups)]
     pub fn list_icon_groups(pe_bytes: &[u8]) -> Result<Vec<u32>, JsValue> {
