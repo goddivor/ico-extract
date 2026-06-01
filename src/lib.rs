@@ -158,33 +158,56 @@ pub fn list_icon_groups(pe_bytes: &[u8]) -> Result<Vec<u32>, String> {
     Ok(names.iter().map(|e| e.id).collect())
 }
 
-/// Extract the icon group at `group_index` (0-based, tree order) as a `.ico`.
-pub fn extract_icon(pe_bytes: &[u8], group_index: usize) -> Result<Vec<u8>, String> {
-    let pe = Pe::parse(pe_bytes)?;
-    let res_base = pe.rva_to_offset(pe.resource_rva)?;
+/// Build the `.ico` for one resolved RT_GROUP_ICON entry.
+fn build_ico_for_group(
+    pe: &Pe,
+    res_base: usize,
+    icon_names: &[ResEntry],
+    group: &ResEntry,
+) -> Result<Vec<u8>, String> {
+    let group_data = first_leaf_data(pe, res_base, group)?;
+    let images = collect_group_images(pe, res_base, icon_names, &group_data)?;
+    Ok(build_ico(&images))
+}
 
+/// Read (RT_ICON names, RT_GROUP_ICON groups) directories from a parsed PE.
+fn icon_dirs<'p>(pe: &'p Pe, res_base: usize) -> Result<(Vec<ResEntry>, Vec<ResEntry>), String> {
+    let _ = pe; // keep signature symmetric
     let types = read_dir_entries(pe.bytes, res_base, 0)?;
-
-    // Build a map: icon id -> RT_ICON image bytes.
     let icon_type = types
         .iter()
         .find(|e| e.id == RT_ICON)
         .ok_or("no RT_ICON resources in file")?;
-    let icon_names = read_dir_entries(pe.bytes, res_base, icon_type.offset as usize)?;
-
-    // Pick the requested RT_GROUP_ICON.
     let group_type = types
         .iter()
         .find(|e| e.id == RT_GROUP_ICON)
         .ok_or("no RT_GROUP_ICON resources in file")?;
+    let icon_names = read_dir_entries(pe.bytes, res_base, icon_type.offset as usize)?;
     let groups = read_dir_entries(pe.bytes, res_base, group_type.offset as usize)?;
+    Ok((icon_names, groups))
+}
+
+/// Extract the icon group at `group_index` (0-based, tree order) as a `.ico`.
+pub fn extract_icon(pe_bytes: &[u8], group_index: usize) -> Result<Vec<u8>, String> {
+    let pe = Pe::parse(pe_bytes)?;
+    let res_base = pe.rva_to_offset(pe.resource_rva)?;
+    let (icon_names, groups) = icon_dirs(&pe, res_base)?;
     let group = groups
         .get(group_index)
         .ok_or_else(|| format!("group index {group_index} out of range ({} groups)", groups.len()))?;
+    build_ico_for_group(&pe, res_base, &icon_names, group)
+}
 
-    let group_data = first_leaf_data(&pe, res_base, group)?;
-    let images = collect_group_images(&pe, res_base, &icon_names, &group_data)?;
-    Ok(build_ico(&images))
+/// Extract the icon group whose Windows resource id is `id` as a `.ico`.
+pub fn extract_icon_by_id(pe_bytes: &[u8], id: u32) -> Result<Vec<u8>, String> {
+    let pe = Pe::parse(pe_bytes)?;
+    let res_base = pe.rva_to_offset(pe.resource_rva)?;
+    let (icon_names, groups) = icon_dirs(&pe, res_base)?;
+    let group = groups
+        .iter()
+        .find(|g| g.id == id)
+        .ok_or_else(|| format!("no icon group with id {id}"))?;
+    build_ico_for_group(&pe, res_base, &icon_names, group)
 }
 
 /// For each entry of a GRPICONDIR, fetch the matching RT_ICON image bytes,
