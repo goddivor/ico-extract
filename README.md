@@ -14,6 +14,12 @@ runs on **any platform** and compiles to **WebAssembly** for use from Node.js.
 Typical use: pull the native folder icon out of `imageres.dll` /
 `shell32.dll`, no Windows tooling (Resource Hacker, PowerShell) required.
 
+> **Windows 10/11 note:** stock icons are no longer stored in the `.dll`
+> itself but in a matching `.mun` file under
+> `C:\Windows\SystemResources\` (e.g. `imageres.dll.mun`). A `.mun` is a
+> regular PE, so point the extractor at it. For example, the generic folder
+> icon is resource id **4** in `imageres.dll.mun`.
+
 ## Why
 
 Windows embeds its stock icons inside DLLs as PE resources. Reading them is pure
@@ -50,8 +56,9 @@ fs.writeFileSync('folder.ico', ico);
 
 | Function | Signature | Returns |
 | -------- | --------- | ------- |
-| `listIconGroups(peBytes)` | `(Uint8Array) => number[]` | resource ids of each `RT_GROUP_ICON` (tree order) |
+| `listIconGroups(peBytes)` | `(Uint8Array) => Uint32Array` | resource ids of each `RT_GROUP_ICON` (tree order) |
 | `extractIcon(peBytes, groupIndex)` | `(Uint8Array, number) => Uint8Array` | `.ico` bytes for the group at `groupIndex` (0-based) |
+| `extractIconById(peBytes, id)` | `(Uint8Array, number) => Uint8Array` | `.ico` bytes for the group whose Windows resource id is `id` |
 
 ## Build from source
 

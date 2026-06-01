@@ -2,9 +2,19 @@
 name = "ico-extract"
 version = "0.1.0"
 edition = "2021"
-description = "Extract icons (.ico) from Windows PE files (.dll/.exe) — pure Rust, compiles to WASM"
+description = "Extract icons (.ico) from Windows PE files (.dll/.exe/.mun) — pure Rust, compiles to WASM"
 license = "MIT"
 repository = "https://github.com/goddivor/ico-extract"
+authors = ["Divor"]
+keywords = ["ico", "icon", "pe", "dll", "wasm"]
+categories = ["parser-implementations", "wasm"]
+
+# Extra fields wasm-pack copies into the generated pkg/package.json.
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = true
+
+[package.metadata.wasm-pack]
+keywords = ["ico", "icon", "extract", "pe", "dll", "exe", "mun", "windows", "wasm", "rust"]
 
 [lib]
 crate-type = ["cdylib", "rlib"]

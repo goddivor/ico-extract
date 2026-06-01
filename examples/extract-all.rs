@@ -1,26 +1,30 @@
 //! Extract every icon group from a PE/MUN file into a directory, one `.ico`
 //! per group named by its Windows resource id.
 //!
-//!   cargo run --example extract-all -- <file> [out_dir]
+//!   cargo run --example extract-all -- [-q|--quiet] <file> [out_dir]
 //!
-//! Default out_dir is "./icons".
+//! Default out_dir is "./icons". With -q/--quiet nothing is printed on success.
 
 use std::env;
 use std::fs;
 use std::path::Path;
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
-    if args.len() < 2 {
-        eprintln!("usage: extract-all <file> [out_dir]");
+    let mut args: Vec<String> = env::args().skip(1).collect();
+    let quiet = take_flag(&mut args, "-q", "--quiet");
+
+    if args.is_empty() {
+        eprintln!("usage: extract-all [-q|--quiet] <file> [out_dir]");
         std::process::exit(2);
     }
-    let bytes = fs::read(&args[1]).expect("read input file");
-    let out_dir = args.get(2).cloned().unwrap_or_else(|| "icons".to_string());
+    let bytes = fs::read(&args[0]).expect("read input file");
+    let out_dir = args.get(1).cloned().unwrap_or_else(|| "icons".to_string());
     fs::create_dir_all(&out_dir).expect("create out dir");
 
     let ids = ico_extract::list_icon_groups(&bytes).expect("list groups");
-    println!("{} icon groups in {}", ids.len(), args[1]);
+    if !quiet {
+        println!("{} icon groups in {}", ids.len(), args[0]);
+    }
 
     let mut ok = 0;
     let mut failed = 0;
@@ -37,5 +41,17 @@ fn main() {
             }
         }
     }
-    println!("wrote {ok} .ico files to {}/ ({failed} failed)", out_dir);
+    if !quiet {
+        println!("wrote {ok} .ico files to {}/ ({failed} failed)", out_dir);
+    }
+}
+
+/// Remove a boolean flag (short or long form) from args if present.
+fn take_flag(args: &mut Vec<String>, short: &str, long: &str) -> bool {
+    if let Some(i) = args.iter().position(|a| a == short || a == long) {
+        args.remove(i);
+        true
+    } else {
+        false
+    }
 }
